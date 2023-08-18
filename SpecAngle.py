@@ -69,7 +69,7 @@ def spec_contrast_angle(dotp):
 
     return spec_angle
 
-def process_spectrum(sequence, scan_num, exp_spectra, pred_mzs, pred_intensities, pred_ions):
+def process_spectrum(sequence, scan_num, rawfile, exp_spectra, pred_mzs, pred_intensities, pred_ions):
     #print (scan_num, info['m/z array'], info['intensity array'])
     spec_mz = exp_spectra['m/z array']
     spec_intensity = exp_spectra['intensity array']
@@ -172,7 +172,7 @@ def SpecAngle_Calc(infiles, msp_file, raw_path):
                 ''' Performs pair-wise spectral comparison of experimentally derived MS/MS spectra of a peptide sequence with its Prosit predicted MS/MS spectra
                 to get the Dot Product and Normalized spectral contrast angle scores.'''
 
-                scan_number, dotp, spec_angle = process_spectrum(sequence, exp_scan_num, scans[exp_scan_num], scan_pep[1], scan_pep[2], scan_pep[3])
+                scan_number, dotp, spec_angle = process_spectrum(sequence, exp_scan_num, r_file, scans[exp_scan_num], scan_pep[1], scan_pep[2], scan_pep[3])
 
                 #print (f'The Dot product and Normalized spectral contrast angle score for peptide {sequence} with respect to its Prosit predicted spectra is {dotp} and {spec_angle}')
         

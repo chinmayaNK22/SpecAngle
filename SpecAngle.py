@@ -25,11 +25,11 @@ args = parser.parse_args()
 
 def store_rawfiles(raw_path):
     rawfiles = {}
-    for files in os.listdir(rawfile_path):
-        if os.path.isfile(os.path.join(rawfile_path, files)):
+    for files in os.listdir(raw_path):
+        if os.path.isfile(os.path.join(raw_path, files)):
             if files.split('.')[-1] == 'mzML':
                 if files not in rawfiles:
-                    rawfiles[files] = [os.path.join(rawfile_path, files)]
+                    rawfiles[files] = [os.path.join(raw_path, files)]
 
     return rawfiles
 

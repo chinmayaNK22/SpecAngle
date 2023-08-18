@@ -85,11 +85,6 @@ def process_spectrum(sequence, scan_num, rawfile, exp_spectra, pred_mzs, pred_in
     The peak match will be performed with the fragmenta match tolerance either in 'ppm' or 'Da'.'''
 
     matched_values, matched_exp_intense, matched_pred_intense, matched_ions = match_spectra.peak_match(spec_mz, pred_mzs, norm_exp_intensity, pred_intensities, pred_ions, tolerance, tolerance_unit)
-
-    #exp_spec_dot = dot_product(spec_mz, norm_intensity)
-    #norm_exp_intensity = sqrt_norm(matched_exp_intense)
-    #prosit_spec_dot = dot_product(pred_mzs, pred_intensities)
-    #print (matched_values, matched_exp_intense, matched_pred_intense, matched_ions, norm_exp_intensity)
     
     dotp = dot_product(matched_pred_intense, matched_exp_intense)
     #print (dotp, matched_pred_intense, matched_ions, norm_exp_intensity) 

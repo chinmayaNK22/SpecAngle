@@ -4,7 +4,7 @@ import math
 from Scripts import parse_msp
 from Scripts import parse_psm_scan
 import os
-import Scripts.match_spectra
+from Scripts import match_spectra
 import argparse
 
 parser = argparse.ArgumentParser(description='''Calculates the Normalized Spectral Angle Score for Pepetide Spectrum Matches by comparing to the Prosit predicted library''')

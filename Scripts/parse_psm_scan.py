@@ -1,7 +1,5 @@
 from itertools import islice
 
-#infile = "Compiled\M_fortuitum_specific_rawfile_cluster_psm_rawinfo_mapped.txt"
-
 def get_header_idx(infile):
     with open(infile) as file:
         for i in islice(file, 0, 1):

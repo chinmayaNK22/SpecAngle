@@ -1,13 +1,8 @@
 import numpy as np
 from itertools import groupby
 
-#infile = "M_fortuitum_SSPPs_SpecLib.msp"
-
 def sort_peptides(infile):
     with open(infile) as file:
-        
-            
-        #split_i = i.rstrip()
             
         peptide_pred_spec = (pred_spec[1] for pred_spec in groupby(file, lambda x: x.startswith('Name:')))
 
@@ -33,10 +28,13 @@ def extract_msp(infile):
         sequence = pep.split(':')[1].strip().split('/')[0]
         z = pep.split(':')[1].strip().split('/')[1]
 
+        mod_strings = 0
+        
         attributes = {"m/z":[],"MODS":[],"Mod_Peptide":[],"iRT":[],"proteotypicity":[]}
         mz_values = np.array([], dtype=float)
         mz_ions = np.array([], dtype='object')
-        mz_intense = np.array([], dtype='f')
+        mz_intense = np.array([], dtype='d')
+        
         for i in info:
             if i.rstrip().startswith('Comment:'):
                     
@@ -50,7 +48,7 @@ def extract_msp(infile):
                     attributes["proteotypicity"].append(float(attrs[5].split('=')[1]))
                     
                 except:
-                    print (f'Found a modified peptide precursor {pep.rstrip()}')
+                    mod_strings += 1
                     for attribute in attrs:
                         if 'iRT' in attribute:
                             attributes["iRT"].append(float(attribute.split('=')[1]))
@@ -67,10 +65,12 @@ def extract_msp(infile):
                 mz_ions = np.append(mz_ions, ions)
                 mz_intense = np.append(mz_intense, float(spectra[1]))
 
+        print (f'INFO: Found a {mod_strings} modified peptide precursors in the library.')
+        
         msms_spec = {}
         msms_ions = {}
         for idx, mz in np.ndenumerate(mz_values):
-            #print (sequence, idx, mz, mz_ions[idx])
+            
             if mz not in msms_spec:
                 msms_ions[mz] = [mz_ions[idx]]
                 msms_spec[mz] = [mz_intense[idx]]
@@ -82,7 +82,7 @@ def extract_msp(infile):
         sorted_mz_ions = np.array([], dtype='object')
         sorted_mz_intense = np.array([], dtype='f')
         for mz in sorted(msms_ions):
-            #print (mz, msms_ions[mz], msms_spec[mz])
+            
             sorted_mz_values = np.append(mz_values, mz)
             sorted_mz_ions = np.append(mz_ions, msms_ions[mz][0])
             sorted_mz_intense = np.append(mz_intense, msms_spec[mz][0])
@@ -90,10 +90,4 @@ def extract_msp(infile):
 
         yield sequence, z, attributes, sorted_mz_values, sorted_mz_ions, sorted_mz_intense
 
-    
-##if __name__== "__main__":
-##    if infile.split('.')[-1] == 'msp':
-##        dissociation_msp_info(infile)
-##    else:
-##        raise Exception("Input file is not in MSP format")
     

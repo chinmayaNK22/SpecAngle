@@ -9,19 +9,15 @@ import argparse
 
 parser = argparse.ArgumentParser(description='''Calculates the Normalized Spectral Angle Score for Pepetide Spectrum Matches by comparing to the Prosit predicted library''')
 
-parser.add_argument('infiles', metavar='-i', type=str, nargs='+', help='Input file consisting peptide spectrum matches with raw file and scan details in tab delimitted format')
+parser.add_argument('infiles', metavar='-i', type=str, nargs='*', help='Input file consisting peptide spectrum matches with raw file and scan details in tab delimitted format')
 
 parser.add_argument('msp_file', metavar='-msp', type=str, nargs='+', help='Prosit predicted peptide spectral library in MSP format')
 
 parser.add_argument('raw_path', metavar='-raw', type=str, nargs='+', help='Path to a location where DDA derived MS/MS data files in mzML format')
 
+parser.add_argument('tol', metavar='-t', type=str, nargs='+', help="Set the fragment tolerance in 'ppm' or 'Da' for matching experimental and theoretical MS/MS peaks")
+
 args = parser.parse_args()
-
-#sspp_msp_file = "../SSPP_Prosit_MSPs/M_abscessus_SSPPs_SpecLib.msp"
-
-#predicted_pep_spec = parse_msp.extract_msp(sspp_msp_file)
-
-#rawfile_path = "."
 
 def store_rawfiles(raw_path):
     rawfiles = {}
@@ -33,9 +29,6 @@ def store_rawfiles(raw_path):
 
     return rawfiles
 
-#rawscan_psm = ["../PSM_RawScan_Mapped/M_abscessus_In_house_specific_rawfile_cluster_psm_rawinfo_mapped.txt", "../PSM_RawScan_Mapped/M_abscessus_specific_rawfile_cluster_psm_rawinfo_mapped.txt"]
-
-#psms = parse_psm_scan.psm_rawinfo(rawscan_psm)
 
 def L2_norm(intensity_array):
     '''Performs L2 normalization of an intensity array.
@@ -97,7 +90,7 @@ def NormSpectralContrastAngle(dotp):
 
     return spec_angle
 
-def process_spectrum(sequence, scan_num, rawfile, exp_spectra, pred_mzs, pred_intensities, pred_ions):
+def process_spectrum(sequence, scan_num, rawfile, exp_spectra, pred_mzs, pred_intensities, pred_ions, tolerance):
     #print (scan_num, info['m/z array'], info['intensity array'])
     spec_mz = exp_spectra['m/z array']
     spec_intensity = exp_spectra['intensity array']
@@ -107,13 +100,13 @@ def process_spectrum(sequence, scan_num, rawfile, exp_spectra, pred_mzs, pred_in
     norm_pred_intensity = L2_norm(pred_intensities)
     norm_exp_intensity = L2_norm(spec_intensity)
 
-    tolerance = 20.0 ## Fragment mass tolerance for matching m/z values from experimental and Prosit predicted spectra
-    tolerance_unit = 'ppm' ## Fragment mass tolerance unit either in 'parts per million' (ppm) or in Dalton (Da)
+    tolerance_val = float(''.join(_ for _ in tolerance if _.isdigit())) ## Fragment mass tolerance for matching m/z values from experimental and Prosit predicted spectra
+    tolerance_unit = ''.join(_ for _ in tolerance if not _.isdigit()) ## Fragment mass tolerance unit either in 'parts per million' (ppm) or in Dalton (Da)
 
     ''' Perform m/z peak match of experimental raw spectra (MS/MS) of a peptide sequence with its respective Prosit predicted fragment spectra.
     The peak match will be performed with the fragmenta match tolerance either in 'ppm' or 'Da'.'''
 
-    matched_values, matched_exp_intense, matched_pred_intense, matched_ions = match_spectra.peak_match(spec_mz, pred_mzs, norm_exp_intensity, norm_pred_intensity, pred_ions, tolerance, tolerance_unit)
+    matched_values, matched_exp_intense, matched_pred_intense, matched_ions = match_spectra.peak_match(spec_mz, pred_mzs, norm_exp_intensity, norm_pred_intensity, pred_ions, tolerance_val, tolerance_unit)
     
     '''Calculate the Dot-Product and Cosine Similarity Angle as defined in the 2011 MCP paper by Yen et al. (2011)'''
     dotp, cos_angle = calc_dot_product(matched_pred_intense, matched_exp_intense)
@@ -127,22 +120,9 @@ def process_spectrum(sequence, scan_num, rawfile, exp_spectra, pred_mzs, pred_in
     else:
         return scan_num, dotp, cos_angle, norm_spec_angle
 
-def list_infiles(infiles):
-    files = []
-    split_i = infiles.split(' ')
+def SpecAngle_Calc(infiles, msp_file, raw_path, tolerance):
 
-    print (split_i)
-    for i in split_i:
-        if len(i) != 0:
-            print (i)
-
-            files.append(i)
-
-    return files
-
-def SpecAngle_Calc(infiles, msp_file, raw_path):
-
-    psms = parse_psm_scan.psm_rawinfo(list_infiles(infiles))
+    psms = parse_psm_scan.psm_rawinfo(infiles)
 
     predicted_pep_spec = parse_msp.extract_msp(msp_file)
 
@@ -197,7 +177,7 @@ def SpecAngle_Calc(infiles, msp_file, raw_path):
                 ''' Performs pair-wise spectral comparison of experimentally derived MS/MS spectra of a peptide sequence with its Prosit predicted MS/MS spectra
                 to get the Dot Product and Normalized spectral contrast angle scores.'''
 
-                scan_number, dotp, cos_angle, Norm_spec_angle = process_spectrum(sequence, exp_scan_num, r_file, scans[exp_scan_num], scan_pep[1], scan_pep[2], scan_pep[3])
+                scan_number, dotp, cos_angle, Norm_spec_angle = process_spectrum(sequence, exp_scan_num, r_file, scans[exp_scan_num], scan_pep[1], scan_pep[2], scan_pep[3], tolerance)
 
                 #print (f'The Dot product and Normalized spectral contrast angle score for peptide {sequence} with respect to its Prosit predicted spectra is {dotp} and {spec_angle}')
         
@@ -217,7 +197,10 @@ def SpecAngle_Calc(infiles, msp_file, raw_path):
             outf.write('\t'.join(pep_spec.split('@') + scores[0].split('@'))+ '\n')
 
 if __name__== "__main__":
-    print (args.infiles[0], args.msp_file[0], args.raw_path[0])
     
-    SpecAngle_Calc(args.infiles[0], args.msp_file[0], args.raw_path[0])
+    if len(args.infiles) > 1:
+        print (f'INFO: There are {len(args.infiles)} input files provided')
+    
+    SpecAngle_Calc(args.infiles, args.msp_file[0], args.raw_path[0], args.tol[0])
+
 

@@ -163,7 +163,7 @@ def SpecAngle_Calc(infiles, msp_file, raw_path, tolerance):
             raise ValueError(f'No raw file information found for {peptide} with charge {z}')
     
         rawinfo = mzml.read(r_file, read_schema=True)
-        scans = {info['id'].split(' ')[-1].strip('scan='):info for info in rawinfo}
+        scans = {rinfo['id'].split(' ')[-1].strip('scan='):rinfo for rinfo in rawinfo}
     
         scan_count = 0
         for scan_pep in info:
